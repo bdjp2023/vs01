@@ -1,0 +1,15 @@
+スクレイピング用
+    # URL
+    "hp": "http://books.toscrape.com/",
+    # 最終ページへのリンクまたはセレクター
+    "jump": "http://books.toscrape.com/catalogue/page-50.html",
+    # 戻りページのセレクター戻れなくなったらそのページのスクレイピングを終えてから終了
+    "back": "/html/body/div/div/div/div/section/div[2]/div/ul/li[1]/a",
+    # 各取得項目のセレクター（無記載""の項目は無視する）
+    "su1": "article.product_pod h3 a",
+    "su2": ".product_price .price_color",
+    "su3": "se3",
+    "su4": "se4",
+    "su5": "",
+    "su6": "",
+
