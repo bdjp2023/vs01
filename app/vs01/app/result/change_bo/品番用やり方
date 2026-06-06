@@ -1,0 +1,22 @@
+取得データ（品名、価格）と自社のマスターデータ（品名、型番）を品名ごとに比較し、
+品名が完全一致したものを型番に変更してまとめて/result/change_boフォルダ内
+にMM_dd_end.jsonのファイルで型番、価格のリスト形式で出力、リストと
+一致しない（似た名称も含む）リストは分けてMM_dd_check.jsonのファイルで品名、
+不可能なら品名、価格、NG）で出力したい。
+
+最適な方法は「Python + pandas」を使った処理です。
+
+使用方法
+acquired_data.csv（取得データ：品名, 価格）
+master_data.csv（自社マスタ：品名, 型番）
+上記スクリプトと同じフォルダに置き、python process_change_bo.py を実行
+
+出力内容
+result/change_bo/06_06_end.json
+
+複数候補が見つかった場合も、備考欄にすべてを「類似候補: XXX(92%), 
+YYY(81%)...」という形式でまとめて出力できます。
+
+必要なインストール
+pip install rapidfuzz pandas
+

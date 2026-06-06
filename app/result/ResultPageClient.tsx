@@ -1,0 +1,198 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+
+type ResultPageClientProps = {
+  secretHref: string;
+};
+
+export default function ResultPageClient({ secretHref }: ResultPageClientProps) {
+  const resultRef = useRef<HTMLDivElement>(null);
+  const [statusText, setStatusText] = useState(
+    'harakiriizm Result Viewer • 上下左右スクロール可能です'
+  );
+  const [resultText, setResultText] = useState(
+    `データがまだありません。\n1ページ目で「JSON出力」ボタンを押した後、このページを開いてください。`
+  );
+
+  useEffect(() => {
+    const saved = localStorage.getItem('harakiriData');
+    if (saved) {
+      try {
+        const currentData = JSON.parse(saved);
+        setResultText(JSON.stringify(currentData, null, 2));
+        setStatusText(
+          `${currentData.length}件のデータを表示しています • 上下左右スクロール可能です`
+        );
+      } catch (e) {
+        setResultText('データ解析エラーが発生しました。');
+      }
+    }
+  }, []);
+
+  const copyToClipboard = () => {
+    const text = resultRef.current?.textContent ?? '';
+    navigator.clipboard.writeText(text).then(() => {
+      const original = statusText;
+      setStatusText('クリップボードにコピーしました');
+      setTimeout(() => {
+        setStatusText(original);
+      }, 2000);
+    });
+  };
+
+  const goTop = () => {
+    window.location.href = 'https://harakiriizm-01.vercel.app/';
+  };
+
+  return (
+    <>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet"
+      />
+      <style>{`
+        :root{
+          --bg:#fff;
+          --primary:#4a90e2;
+          --gray:#f5f7fa;
+          --text:#333;
+          --border:#ddd;
+          --radius:8px;
+          --shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{
+          font-family:'Noto Sans JP',sans-serif;
+          background:var(--gray);
+          color:var(--text);
+          display:flex;
+          justify-content:center;
+          padding:1rem;
+          min-height:100vh;
+        }
+        .wrapper{
+          background:var(--bg);
+          max-width:860px;
+          width:100%;
+          padding:2rem;
+          border-radius:var(--radius);
+          box-shadow:var(--shadow);
+        }
+        header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          margin-bottom:2rem;
+          padding-bottom:1.2rem;
+          border-bottom:2px solid var(--border);
+        }
+        .back-link{
+          color:var(--primary);
+          text-decoration:none;
+          font-weight:500;
+          font-size:1.05rem;
+        }
+        .back-link:hover{
+          text-decoration:underline;
+        }
+        .hidden-star{
+          color:var(--bg);
+          font-size:2rem;
+          line-height:1;
+          text-decoration:none;
+          user-select:none;
+          cursor:pointer;
+          padding:0 8px;
+        }
+        .hidden-star:hover{
+          color:#e74c3c;
+        }
+        h1{
+          color:#2c3e50;
+          font-size:2.3rem;
+          font-weight:700;
+          flex:1;
+          text-align:center;
+        }
+        .result-container{
+          background:#f8f9fb;
+          border:2px solid var(--border);
+          border-radius:var(--radius);
+          padding:1.8rem;
+          max-height:68vh;
+          overflow:auto;
+          font-family:ui-monospace, 'Courier New', monospace;
+          font-size:0.93rem;
+          line-height:1.55;
+          white-space:pre;
+          tab-size:2;
+          box-shadow:inset 0 3px 8px rgba(0,0,0,0.06);
+        }
+        .result-container::-webkit-scrollbar{
+          width:14px;
+          height:14px;
+        }
+        .result-container::-webkit-scrollbar-thumb{
+          background:#aaa;
+          border-radius:7px;
+        }
+        .actions{
+          display:flex;
+          gap:1rem;
+          margin-top:1.8rem;
+          justify-content:center;
+        }
+        .actions button{
+          padding:0.75rem 1.8rem;
+          border:none;
+          border-radius:var(--radius);
+          font-weight:500;
+          color:#fff;
+          cursor:pointer;
+          font-size:1rem;
+        }
+        .back-btn{background:var(--primary);}
+        .copy-btn{background:#2ecc71;}
+        .status{
+          margin-top:1.5rem;
+          text-align:center;
+          font-size:0.9rem;
+          color:#666;
+        }
+        @media (max-width:600px){
+          h1{font-size:1.9rem;}
+          .wrapper{padding:1.4rem;}
+          header{flex-wrap:wrap; gap:0.8rem;}
+          h1{order:3; width:100%; margin-top:0.5rem;}
+        }
+      `}</style>
+
+      <div className="wrapper">
+        <header>
+          <a href="https://harakiriizm-01.vercel.app/" className="back-link">
+            ← トップに戻る
+          </a>
+          <h1>実行結果</h1>
+          <a href={secretHref} className="hidden-star">
+            ＊
+          </a>
+        </header>
+
+        <div className="result-container" id="result-display" ref={resultRef}>
+          {resultText}
+        </div>
+
+        <div className="actions">
+          <button className="back-btn" onClick={goTop}>
+            トップに戻る
+          </button>
+          <button className="copy-btn" onClick={copyToClipboard}>
+            📋 クリップボードにコピー
+          </button>
+        </div>
+        <div className="status">{statusText}</div>
+      </div>
+    </>
+  );
+}

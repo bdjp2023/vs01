@@ -1,0 +1,121 @@
+2026-06-06 17:15:57 [INFO] ============================================================
+2026-06-06 17:15:57 [INFO] スクレイピング処理を開始します。
+2026-06-06 17:15:57 [ERROR] 予期しない致命的エラーが発生しました: input.json は要素を1つ以上含む配列である必要があります。
+Traceback (most recent call last):
+  File "/home/bdjp/Desktop/vs01/app/sp00/main.py", line 570, in <module>
+    run()
+  File "/home/bdjp/Desktop/vs01/app/sp00/main.py", line 430, in run
+    config = load_config(INPUT_FILE)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bdjp/Desktop/vs01/app/sp00/main.py", line 119, in load_config
+    raise ValueError("input.json は要素を1つ以上含む配列である必要があります。")
+ValueError: input.json は要素を1つ以上含む配列である必要があります。
+2026-06-06 18:28:41 [INFO] ============================================================
+2026-06-06 18:28:41 [INFO] スクレイピング処理を開始します。
+2026-06-06 18:28:41 [ERROR] 予期しない致命的エラーが発生しました: input.json は要素を1つ以上含む配列である必要があります。
+Traceback (most recent call last):
+  File "/home/bdjp/Desktop/vs01/app/sp00/main.py", line 570, in <module>
+    run()
+  File "/home/bdjp/Desktop/vs01/app/sp00/main.py", line 430, in run
+    config = load_config(INPUT_FILE)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bdjp/Desktop/vs01/app/sp00/main.py", line 119, in load_config
+    raise ValueError("input.json は要素を1つ以上含む配列である必要があります。")
+ValueError: input.json は要素を1つ以上含む配列である必要があります。
+2026-06-06 18:29:35 [INFO] ============================================================
+2026-06-06 18:29:35 [INFO] スクレイピング処理を開始します。
+2026-06-06 18:29:35 [INFO] 設定を読み込みました（配列 index 0 を使用）。
+2026-06-06 18:29:35 [INFO] 抽出対象の列: ['su1', 'su2', 'su3', 'su4']
+2026-06-06 18:29:36 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 18:29:36 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-50.html
+2026-06-06 18:29:37 [INFO] playwright-stealth が未導入のため、未適用で続行します。
+2026-06-06 18:29:37 [INFO] 最初のページへアクセスします: http://books.toscrape.com/catalogue/page-50.html
+2026-06-06 18:29:39 [INFO] --- ページ 1 の処理を開始 ---
+2026-06-06 18:29:45 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 18:29:45 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-50.html
+2026-06-06 18:29:46 [ERROR] 列 'su3' のデータが取得できませんでした（セレクター=se3）
+2026-06-06 18:29:46 [ERROR] 列 'su4' のデータが取得できませんでした（セレクター=se4）
+2026-06-06 18:29:46 [INFO] ページから 20 件を抽出しました。
+2026-06-06 18:29:46 [INFO] 累計取得件数: 20 件
+2026-06-06 18:29:46 [INFO] 待機: 9.50 秒
+2026-06-06 18:29:56 [INFO] 前ページへ遷移しました。
+2026-06-06 18:29:56 [INFO] --- ページ 2 の処理を開始 ---
+2026-06-06 18:30:03 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 18:30:03 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-49.html
+2026-06-06 18:30:04 [ERROR] 列 'su3' のデータが取得できませんでした（セレクター=se3）
+2026-06-06 18:30:04 [ERROR] 列 'su4' のデータが取得できませんでした（セレクター=se4）
+2026-06-06 18:30:04 [INFO] ページから 20 件を抽出しました。
+2026-06-06 18:30:04 [INFO] 累計取得件数: 40 件
+2026-06-06 18:30:04 [INFO] 待機: 6.57 秒
+2026-06-06 18:30:11 [INFO] 前ページへ遷移しました。
+2026-06-06 18:30:11 [INFO] --- ページ 3 の処理を開始 ---
+2026-06-06 18:30:17 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 18:30:17 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-48.html
+2026-06-06 18:30:17 [ERROR] 列 'su3' のデータが取得できませんでした（セレクター=se3）
+2026-06-06 18:30:17 [ERROR] 列 'su4' のデータが取得できませんでした（セレクター=se4）
+2026-06-06 18:30:17 [INFO] ページから 20 件を抽出しました。
+2026-06-06 18:30:17 [INFO] 累計取得件数: 60 件
+2026-06-06 18:30:17 [INFO] 待機: 12.97 秒
+2026-06-06 18:30:31 [INFO] 前ページへ遷移しました。
+2026-06-06 18:30:31 [INFO] --- ページ 4 の処理を開始 ---
+2026-06-06 18:30:37 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 18:30:37 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-47.html
+2026-06-06 18:30:38 [ERROR] 列 'su3' のデータが取得できませんでした（セレクター=se3）
+2026-06-06 18:30:38 [ERROR] 列 'su4' のデータが取得できませんでした（セレクター=se4）
+2026-06-06 18:30:38 [INFO] ページから 20 件を抽出しました。
+2026-06-06 18:30:38 [INFO] 累計取得件数: 80 件
+2026-06-06 18:30:38 [INFO] 待機: 10.50 秒
+2026-06-06 18:30:49 [INFO] 前ページへ遷移しました。
+2026-06-06 18:30:49 [INFO] --- ページ 5 の処理を開始 ---
+2026-06-06 18:30:55 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 18:30:55 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-46.html
+2026-06-06 18:30:56 [ERROR] 列 'su3' のデータが取得できませんでした（セレクター=se3）
+2026-06-06 18:30:56 [ERROR] 列 'su4' のデータが取得できませんでした（セレクター=se4）
+2026-06-06 18:30:56 [INFO] ページから 20 件を抽出しました。
+2026-06-06 18:30:56 [INFO] 累計取得件数: 100 件
+2026-06-06 18:30:56 [INFO] 待機: 10.62 秒
+2026-06-06 18:31:07 [INFO] 前ページへ遷移しました。
+2026-06-06 18:31:07 [INFO] --- ページ 6 の処理を開始 ---
+2026-06-06 18:31:12 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 18:31:12 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-45.html
+2026-06-06 18:31:12 [ERROR] 列 'su3' のデータが取得できませんでした（セレクター=se3）
+2026-06-06 18:31:12 [ERROR] 列 'su4' のデータが取得できませんでした（セレクター=se4）
+2026-06-06 18:31:12 [INFO] ページから 20 件を抽出しました。
+2026-06-06 18:31:12 [INFO] 累計取得件数: 120 件
+2026-06-06 18:31:12 [INFO] 待機: 6.90 秒
+2026-06-06 18:31:19 [INFO] 前ページへのリンクが見つかりません。処理を終了します。
+2026-06-06 18:31:19 [INFO] CSVを保存しました: output_2026-06-06.csv（120 行）
+2026-06-06 18:31:19 [INFO] スクレイピング処理が完了しました。
+2026-06-06 18:31:19 [INFO] ============================================================
+2026-06-06 19:27:31 [INFO] ============================================================
+2026-06-06 19:27:31 [INFO] スクレイピング処理を開始します。
+2026-06-06 19:27:31 [INFO] 設定を読み込みました（配列 index 0 を使用）。
+2026-06-06 19:27:31 [INFO] 抽出対象の列: ['su1', 'su2']
+2026-06-06 19:27:32 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 19:27:32 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-3.html
+2026-06-06 19:27:33 [INFO] playwright-stealth が未導入のため、未適用で続行します。
+2026-06-06 19:27:33 [INFO] 最初のページへアクセスします: http://books.toscrape.com/catalogue/page-3.html
+2026-06-06 19:27:35 [INFO] --- ページ 1 の処理を開始 ---
+2026-06-06 19:27:41 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 19:27:41 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-3.html
+2026-06-06 19:27:41 [INFO] ページから 20 件を抽出しました。
+2026-06-06 19:27:41 [INFO] 累計取得件数: 20 件
+2026-06-06 19:27:41 [INFO] 待機: 11.92 秒
+2026-06-06 19:27:55 [INFO] 前ページへ遷移しました。
+2026-06-06 19:27:55 [INFO] --- ページ 2 の処理を開始 ---
+2026-06-06 19:28:02 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 19:28:02 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-2.html
+2026-06-06 19:28:02 [INFO] ページから 20 件を抽出しました。
+2026-06-06 19:28:02 [INFO] 累計取得件数: 40 件
+2026-06-06 19:28:02 [INFO] 待機: 9.16 秒
+2026-06-06 19:28:13 [INFO] 前ページへ遷移しました。
+2026-06-06 19:28:13 [INFO] --- ページ 3 の処理を開始 ---
+2026-06-06 19:28:19 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-06 19:28:19 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-1.html
+2026-06-06 19:28:19 [INFO] ページから 20 件を抽出しました。
+2026-06-06 19:28:19 [INFO] 累計取得件数: 60 件
+2026-06-06 19:28:19 [INFO] 待機: 13.17 秒
+2026-06-06 19:28:32 [INFO] 前ページへのリンクが見つかりません。処理を終了します。
+2026-06-06 19:28:33 [INFO] CSVを保存しました: /home/bdjp/Desktop/vs01/app/bo_data/bo_2026-06-06.csv（60 行）
+2026-06-06 19:28:33 [INFO] スクレイピング処理が完了しました。
+2026-06-06 19:28:33 [INFO] ============================================================

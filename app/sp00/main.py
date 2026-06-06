@@ -1,0 +1,581 @@
+# File: main.py
+"""
+逆順ページネーション対応 ウェブスクレイパー
+
+input.json の最初の要素のみを設定として読み込み、指定サイトから
+サーバーに過度な負荷をかけないよう配慮しつつ情報を収集し、
+output_YYYY-MM-DD.csv 形式で保存する。
+
+設計方針:
+    - robots.txt の遵守（Disallow パスへのアクセス時は即時終了）
+    - 人間らしい挙動（ランダム待機・スクロール・マウス移動・ホバー）
+    - PlaywrightのLocatorを第一優先、BeautifulSoupをフォールバック
+    - ブロックページ（Cloudflare/DataDome/PerimeterX）検知時は安全停止
+    - 個人情報・ログイン情報は一切取得しない
+"""
+
+import json
+import logging
+import random
+import re
+import sys
+import time
+import urllib.robotparser
+from datetime import date
+from pathlib import Path
+from urllib.parse import urljoin, urlparse
+
+import pandas as pd
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+from playwright.sync_api import (
+    TimeoutError as PlaywrightTimeoutError,
+    sync_playwright,
+)
+
+# playwright-stealth は環境によって未導入の場合があるため、安全に取り込む
+try:
+    from playwright_stealth import stealth_sync
+
+    _STEALTH_AVAILABLE = True
+except Exception:  # pragma: no cover
+    _STEALTH_AVAILABLE = False
+
+
+# ---------------------------------------------------------------------------
+# 定数定義
+# ---------------------------------------------------------------------------
+INPUT_FILE = "inputizm.json"
+LOG_FILE = "scrape.log"
+
+# 1ページの処理が長期化しないための上限ページ数（無限ループ防止の安全弁）
+MAX_PAGES = 500
+
+# ブロックページ検知に用いるシグネチャ（タイトル/本文に含まれ得る文字列）
+BLOCK_SIGNATURES = [
+    "cloudflare",
+    "attention required",
+    "checking your browser",
+    "datadome",
+    "perimeterx",
+    "px-captcha",
+    "access denied",
+    "verify you are human",
+    "just a moment",
+]
+
+# 各ページ遷移後の待機（秒）。推奨に従い triangular(5, 18, 9) を使用。
+WAIT_MIN = 5.0
+WAIT_MAX = 18.0
+WAIT_MODE = 9.0
+
+
+# ---------------------------------------------------------------------------
+# ロギング設定
+# ---------------------------------------------------------------------------
+def setup_logging() -> logging.Logger:
+    """ファイルとコンソール双方へ出力するロガーを構築する。"""
+    logger = logging.getLogger("scraper")
+    logger.setLevel(logging.INFO)
+
+    # 二重登録防止
+    if logger.handlers:
+        return logger
+
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    file_handler.setFormatter(formatter)
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    return logger
+
+
+logger = setup_logging()
+
+
+# ---------------------------------------------------------------------------
+# 設定読み込み
+# ---------------------------------------------------------------------------
+def load_config(path: str) -> dict:
+    """input.json を読み込み、配列の最初の要素を返す。"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        logger.error("設定ファイルが見つかりません: %s", path)
+        raise
+    except json.JSONDecodeError as exc:
+        logger.error("設定ファイルのJSON解析に失敗しました: %s", exc)
+        raise
+
+    if not isinstance(data, list) or not data:
+        raise ValueError("input.json は要素を1つ以上含む配列である必要があります。")
+
+    config = data[0]
+    logger.info("設定を読み込みました（配列 index 0 を使用）。")
+    return config
+
+
+def extract_su_columns(config: dict) -> dict:
+    """
+    「su」+数字のキーのみを抽出し、値（CSSセレクター）が空でないものだけを返す。
+    返り値: {列名: CSSセレクター} の辞書（キー名の数値順）。
+    """
+    su_pattern = re.compile(r"^su(\d+)$")
+    selected = {}
+
+    for key, value in config.items():
+        match = su_pattern.match(key)
+        if not match:
+            continue
+        if not isinstance(value, str) or value.strip() == "":
+            # 空文字列の列は作成せず無視
+            continue
+        selected[key] = value.strip()
+
+    # キーの数値部分でソートして列順を安定させる
+    ordered = dict(
+        sorted(selected.items(), key=lambda kv: int(su_pattern.match(kv[0]).group(1)))
+    )
+    logger.info("抽出対象の列: %s", list(ordered.keys()))
+    return ordered
+
+
+# ---------------------------------------------------------------------------
+# robots.txt チェック
+# ---------------------------------------------------------------------------
+def check_robots(base_url: str, target_url: str, user_agent: str) -> bool:
+    """
+    base_url のドメインから robots.txt を取得・解析し、
+    target_url のパスへのアクセス可否を返す。
+    取得できない場合は安全側に倒して許可扱いとせず、Trueは慎重に返す。
+    """
+    parsed = urlparse(base_url)
+    robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
+
+    parser = urllib.robotparser.RobotFileParser()
+    parser.set_url(robots_url)
+
+    try:
+        parser.read()
+        logger.info("robots.txt を取得しました: %s", robots_url)
+    except Exception as exc:
+        # 取得失敗時は明示的に警告。ここでは「取得できない＝許可」とはみなさず、
+        # 安全性を優先してアクセスを許容するが、強い警告を残す。
+        logger.warning(
+            "robots.txt を取得できませんでした（%s）。続行しますが注意してください。",
+            exc,
+        )
+        return True
+
+    allowed = parser.can_fetch(user_agent, target_url)
+    if allowed:
+        logger.info("robots.txt によりアクセスが許可されています: %s", target_url)
+    else:
+        logger.warning(
+            "robots.txt により Disallow されています: %s", target_url
+        )
+    return allowed
+
+
+# ---------------------------------------------------------------------------
+# 人間らしい挙動
+# ---------------------------------------------------------------------------
+def human_like_delay() -> None:
+    """5〜18秒の強くランダム化された待機（三角分布）。"""
+    wait = random.triangular(WAIT_MIN, WAIT_MAX, WAIT_MODE)
+    logger.info("待機: %.2f 秒", wait)
+    time.sleep(wait)
+
+
+def human_like_behavior(page) -> None:
+    """
+    ページ内でのランダムスクロール・マウス移動・ホバーを行い、
+    自動化を悟られにくくする。例外が出ても処理は継続。
+    """
+    try:
+        viewport = page.viewport_size or {"width": 1280, "height": 800}
+        width = viewport["width"]
+        height = viewport["height"]
+
+        # ランダムな複数回スクロール
+        scroll_times = random.randint(2, 5)
+        for _ in range(scroll_times):
+            delta = random.randint(200, 800)
+            page.mouse.wheel(0, delta)
+            time.sleep(random.uniform(0.4, 1.4))
+
+        # 軽いマウス移動
+        for _ in range(random.randint(1, 3)):
+            x = random.randint(0, max(1, width - 1))
+            y = random.randint(0, max(1, height - 1))
+            page.mouse.move(x, y, steps=random.randint(5, 20))
+            time.sleep(random.uniform(0.2, 0.8))
+
+        # 可能であれば適当な要素へホバー
+        try:
+            candidates = page.locator("a, button").all()
+            if candidates:
+                target = random.choice(candidates)
+                target.hover(timeout=2000)
+                time.sleep(random.uniform(0.3, 1.0))
+        except Exception:
+            # ホバー失敗は無視（致命的ではない）
+            pass
+
+    except Exception as exc:
+        logger.debug("人間らしい挙動の一部に失敗しました（無視して継続）: %s", exc)
+
+
+# ---------------------------------------------------------------------------
+# ブロックページ検知
+# ---------------------------------------------------------------------------
+def detect_block(page) -> bool:
+    """
+    Cloudflare/DataDome/PerimeterX 等のブロックページを検知する。
+    検知したら True を返す。
+    """
+    try:
+        title = (page.title() or "").lower()
+        # 本文の冒頭のみを取得して負荷を抑える
+        body_text = ""
+        try:
+            body_text = (page.inner_text("body", timeout=3000) or "").lower()
+        except Exception:
+            pass
+
+        haystack = f"{title} {body_text[:2000]}"
+        for sig in BLOCK_SIGNATURES:
+            if sig in haystack:
+                logger.error(
+                    "ブロックページを検知しました（シグネチャ: '%s', title: '%s'）",
+                    sig,
+                    title,
+                )
+                return True
+    except Exception as exc:
+        logger.debug("ブロック検知中の例外（無視）: %s", exc)
+    return False
+
+
+# ---------------------------------------------------------------------------
+# データ抽出
+# ---------------------------------------------------------------------------
+def extract_page_data(page, columns: dict) -> list:
+    """
+    現在のページから全商品分のデータを抽出する。
+
+    戦略:
+        - 各列の「行数」は、最初に値が見つかった列の要素数を基準にする。
+        - Playwright Locator を第一優先、失敗時は BeautifulSoup をフォールバック。
+        - 値が取れない場合は空文字を記録し、エラーログを残して継続。
+
+    返り値: [{列名: 値, ...}, ...]
+    """
+    # まず各列の Locator から要素テキストのリストを取得する
+    column_values = {}  # {列名: [値, 値, ...]}
+
+    # フォールバック用に HTML を一度だけ取得
+    soup = None
+    try:
+        html = page.content()
+        soup = BeautifulSoup(html, "html.parser")
+    except Exception as exc:
+        logger.warning("ページHTMLの取得に失敗しました（BS4フォールバック不可）: %s", exc)
+
+    for col_name, selector in columns.items():
+        values = []
+
+        # --- 第一優先: Playwright Locator ---
+        try:
+            locator = page.locator(selector)
+            count = locator.count()
+            for i in range(count):
+                try:
+                    text = locator.nth(i).inner_text(timeout=3000)
+                    values.append(text.strip() if text else "")
+                except Exception as exc:
+                    logger.debug(
+                        "Locator個別取得失敗（列=%s, index=%d）: %s",
+                        col_name,
+                        i,
+                        exc,
+                    )
+                    values.append("")
+        except Exception as exc:
+            logger.warning(
+                "Locator抽出に失敗しました（列=%s, セレクター=%s）: %s",
+                col_name,
+                selector,
+                exc,
+            )
+
+        # --- フォールバック: BeautifulSoup ---
+        if not values and soup is not None:
+            try:
+                elements = soup.select(selector)
+                values = [el.get_text(strip=True) for el in elements]
+                if values:
+                    logger.info(
+                        "BeautifulSoupフォールバックで抽出しました（列=%s, 件数=%d）",
+                        col_name,
+                        len(values),
+                    )
+            except Exception as exc:
+                logger.error(
+                    "BeautifulSoup抽出にも失敗しました（列=%s）: %s", col_name, exc
+                )
+
+        if not values:
+            logger.error(
+                "列 '%s' のデータが取得できませんでした（セレクター=%s）",
+                col_name,
+                selector,
+            )
+
+        column_values[col_name] = values
+
+    # 行数を決定（最大要素数に合わせ、不足分は空文字で埋める）
+    row_count = max((len(v) for v in column_values.values()), default=0)
+    if row_count == 0:
+        logger.warning("このページからは1件もデータを抽出できませんでした。")
+        return []
+
+    rows = []
+    for i in range(row_count):
+        row = {}
+        for col_name in columns.keys():
+            vals = column_values.get(col_name, [])
+            row[col_name] = vals[i] if i < len(vals) else ""
+        rows.append(row)
+
+    logger.info("ページから %d 件を抽出しました。", len(rows))
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# ページ遷移
+# ---------------------------------------------------------------------------
+def navigate_back(page, back_xpath: str) -> bool:
+    """
+    back セレクター（XPath）で前ページリンクを探し、見つかればクリックして遷移する。
+    遷移できれば True、リンクが無ければ False を返す。
+    """
+    # XPath を Playwright Locator で扱うため xpath= プレフィックスを付与
+    xpath_selector = back_xpath
+    if not xpath_selector.startswith("xpath="):
+        xpath_selector = f"xpath={back_xpath}"
+
+    try:
+        locator = page.locator(xpath_selector)
+        if locator.count() == 0:
+            logger.info("前ページへのリンクが見つかりません。処理を終了します。")
+            return False
+
+        link = locator.first
+        # クリック前に軽くホバー
+        try:
+            link.hover(timeout=2000)
+            time.sleep(random.uniform(0.3, 0.9))
+        except Exception:
+            pass
+
+        link.click(timeout=10000)
+        logger.info("前ページへ遷移しました。")
+        return True
+
+    except PlaywrightTimeoutError:
+        logger.info("前ページリンクのクリックがタイムアウトしました。終了します。")
+        return False
+    except Exception as exc:
+        logger.warning("前ページ遷移中に例外が発生しました。終了します: %s", exc)
+        return False
+
+
+# ---------------------------------------------------------------------------
+# ページ準備（読み込み待機・人間挙動・ブロック検知）
+# ---------------------------------------------------------------------------
+def prepare_page(page) -> bool:
+    """
+    ページの読み込み完了を待ち、人間らしい挙動を行い、ブロックを検知する。
+    安全に継続可能なら True、ブロック検知時は False を返す。
+    """
+    try:
+        page.wait_for_load_state("networkidle", timeout=30000)
+    except PlaywrightTimeoutError:
+        logger.warning("networkidle 待機がタイムアウトしました（処理は継続）。")
+
+    if detect_block(page):
+        return False
+
+    human_like_behavior(page)
+    return True
+
+
+# ---------------------------------------------------------------------------
+# メイン処理
+# ---------------------------------------------------------------------------
+def run() -> None:
+    logger.info("=" * 60)
+    logger.info("スクレイピング処理を開始します。")
+
+    # 1. 設定読み込み
+    config = load_config(INPUT_FILE)
+    base_url = config.get("hp", "").strip()
+    jump_url = config.get("jump", "").strip()
+    back_xpath = config.get("back", "").strip()
+    columns = extract_su_columns(config)
+
+    if not base_url or not jump_url:
+        logger.error("hp または jump が設定されていません。終了します。")
+        return
+    if not columns:
+        logger.error("有効な su* 列が1つもありません。終了します。")
+        return
+
+    # UserAgent 準備
+    try:
+        ua = UserAgent()
+    except Exception as exc:
+        logger.warning("fake_useragent の初期化に失敗しました: %s", exc)
+        ua = None
+
+    def next_user_agent() -> str:
+        if ua is not None:
+            try:
+                return ua.random
+            except Exception:
+                pass
+        # フォールバックUA
+        return (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        )
+
+    # 2. robots.txt チェック
+    initial_ua = next_user_agent()
+    if not check_robots(base_url, jump_url, initial_ua):
+        logger.warning("robots.txt で禁止されているため、処理を即時終了します。")
+        return
+
+    all_rows = []
+
+    # 3. Playwright 起動
+    with sync_playwright() as p:
+        # 本番運用時は headless=True に切り替え可能。
+        # 検知回避・人間挙動の確認のため、ここでは headless=False を既定とする。
+        browser = p.chromium.launch(headless=False)
+
+        try:
+            page_count = 0
+            current_url = jump_url
+
+            # 最初のページのみ goto。以降は back クリックで遷移。
+            context = browser.new_context(
+                user_agent=initial_ua,
+                viewport={"width": 1280, "height": 800},
+                locale="ja-JP",
+            )
+            page = context.new_page()
+
+            if _STEALTH_AVAILABLE:
+                try:
+                    stealth_sync(page)
+                    logger.info("playwright-stealth を適用しました。")
+                except Exception as exc:
+                    logger.warning("stealth 適用に失敗しました: %s", exc)
+            else:
+                logger.info(
+                    "playwright-stealth が未導入のため、未適用で続行します。"
+                )
+
+            logger.info("最初のページへアクセスします: %s", jump_url)
+            try:
+                page.goto(jump_url, timeout=60000, wait_until="domcontentloaded")
+            except Exception as exc:
+                logger.error("最初のページへのアクセスに失敗しました: %s", exc)
+                return
+
+            while page_count < MAX_PAGES:
+                page_count += 1
+                logger.info("--- ページ %d の処理を開始 ---", page_count)
+
+                # 読み込み待機・人間挙動・ブロック検知
+                if not prepare_page(page):
+                    logger.error("ブロックを検知したため安全に停止します。")
+                    break
+
+                # robots.txt の都度チェック（現在URLに対して）
+                try:
+                    current_url = page.url
+                except Exception:
+                    current_url = jump_url
+                if not check_robots(base_url, current_url, initial_ua):
+                    logger.warning(
+                        "現在URLが robots.txt で禁止されています。停止します: %s",
+                        current_url,
+                    )
+                    break
+
+                # データ抽出
+                rows = extract_page_data(page, columns)
+                all_rows.extend(rows)
+                logger.info("累計取得件数: %d 件", len(all_rows))
+
+                # 各ページ遷移後の待機
+                human_like_delay()
+
+                # 前ページへ遷移
+                if not navigate_back(page, back_xpath):
+                    break
+
+            else:
+                logger.warning(
+                    "最大ページ数 (%d) に達したため処理を打ち切りました。", MAX_PAGES
+                )
+
+        finally:
+            try:
+                browser.close()
+            except Exception:
+                pass
+
+       # 7. CSV 保存
+    if not all_rows:
+        logger.warning("取得データが0件のため、CSVは作成しません。")
+        return
+
+    df = pd.DataFrame(all_rows, columns=list(columns.keys()))
+    
+    # 保存場所をひとつ上の階層の "bo_data" フォルダに変更
+    output_dir = Path(__file__).parent.parent / "bo_data"
+    output_dir.mkdir(parents=True, exist_ok=True)  # フォルダがなければ自動作成
+    
+    output_file = output_dir / f"bo_{date.today().isoformat()}.csv"
+    
+    try:
+        df.to_csv(output_file, index=False, encoding="utf-8-sig", header=False)
+        logger.info("CSVを保存しました: %s（%d 行）", output_file, len(df))
+    except Exception as exc:
+        logger.error("CSV保存に失敗しました: %s", exc)
+
+    logger.info("スクレイピング処理が完了しました。")
+    logger.info("=" * 60)
+
+
+if __name__ == "__main__":
+    try:
+        run()
+    except KeyboardInterrupt:
+        logger.warning("ユーザーにより中断されました。")
+    except Exception as exc:
+        logger.exception("予期しない致命的エラーが発生しました: %s", exc)

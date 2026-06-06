@@ -1,0 +1,255 @@
+<script src="/_next/static/chunks/polyfills-42372ed130431b0a.js" noModule=""></script><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/webpack-5adebf9f62dc3001.js"/><script src="/_next/static/chunks/4bd1b696-7437630bc5bdf9a0.js" async=""></script><script src="/_next/static/chunks/684-d555673faabb8813.js" async=""></script><script src="/_next/static/chunks/main-app-ca65c095698b8a01.js" async=""></script><script src="/_next/static/chunks/app/photo/page-420b6c4615f32df4.js" async=""></script><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/><title>秘密のフォルダ | harakiriizm</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet"/><style>
+        :root {
+          --bg: #fff;
+          --primary: #4a90e2;
+          --gray: #f5f7fa;
+          --text: #333;
+          --border: #ddd;
+          --radius: 8px;
+          --shadow: 0 2px 6px rgba(0,0,0,0.08);
+          --danger: #e24a4a;
+          --folder: #f5c451;
+          --image: #7ac57a;
+        }
+        * { box-sizing: border-box; }
+        body {
+          font-family: 'Noto Sans JP', sans-serif;
+          font-weight: 400;
+          background: var(--gray);
+          color: var(--text);
+          margin: 0;
+          padding: 0;
+          min-height: 100vh;
+        }
+        header {
+          background: var(--bg);
+          box-shadow: var(--shadow);
+          padding: 16px 24px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+        header .back-link {
+          color: var(--primary);
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 0.95rem;
+        }
+        header .back-link:hover { text-decoration: underline; }
+        header h1 {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 700;
+          text-align: center;
+          flex: 1;
+        }
+        header .hidden-star {
+          color: var(--bg);
+          text-decoration: none;
+          user-select: none;
+          font-size: 0.95rem;
+          width: 80px;
+          text-align: right;
+        }
+        .breadcrumb-bar {
+          background: var(--bg);
+          border-bottom: 1px solid var(--border);
+          padding: 12px 24px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .breadcrumb-bar .current-label { font-size: 0.8rem; color: #888; }
+        .breadcrumb-bar .current-folder {
+          font-weight: 700; font-size: 1rem; color: var(--primary);
+        }
+        .breadcrumb-path {
+          display: flex; align-items: center; gap: 4px;
+          flex-wrap: wrap; font-size: 0.9rem;
+        }
+        .breadcrumb-path a {
+          color: var(--primary); text-decoration: none; cursor: pointer;
+        }
+        .breadcrumb-path a:hover { text-decoration: underline; }
+        .breadcrumb-path .sep { color: #aaa; }
+        .vault-container {
+          display: grid;
+          grid-template-columns: 220px 1fr 280px;
+          gap: 16px;
+          max-width: 1300px;
+          margin: 16px auto;
+          padding: 0 16px;
+        }
+        .vault-panel {
+          background: var(--bg);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow);
+          padding: 16px;
+        }
+        .vault-panel h2 {
+          margin: 0 0 12px;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--primary);
+          border-bottom: 2px solid var(--gray);
+          padding-bottom: 6px;
+        }
+        .folder-tree {
+          list-style: none; margin: 0; padding: 0;
+          font-size: 0.9rem; max-height: 60vh; overflow-y: auto;
+        }
+        .folder-tree li {
+          padding: 6px 8px; border-radius: 4px; cursor: pointer;
+          user-select: none; white-space: nowrap; overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .folder-tree li:hover { background: var(--gray); }
+        .folder-tree li.active { background: var(--primary); color: #fff; }
+        .folder-tree .tree-icon { margin-right: 6px; }
+        .content-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+          gap: 12px;
+          min-height: 300px;
+        }
+        .item-card {
+          display: flex; flex-direction: column; align-items: center;
+          padding: 12px 6px;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          cursor: pointer;
+          transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+          text-decoration: none; color: var(--text);
+          background: var(--bg); position: relative;
+        }
+        .item-card:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow);
+          background: var(--gray);
+        }
+        .item-card .item-mark {
+          font-size: 2.4rem; line-height: 1; margin-bottom: 8px;
+        }
+        .item-card.folder .item-mark { color: var(--folder); }
+        .item-card.image  .item-mark { color: var(--image); }
+        .item-card.up     .item-mark { color: #888; }
+        .item-card .item-name {
+          font-size: 0.8rem; text-align: center;
+          word-break: break-all; line-height: 1.3;
+          max-height: 2.6em; overflow: hidden;
+        }
+        .item-card .item-thumb {
+          width: 100%; height: 70px; object-fit: cover;
+          border-radius: 4px; margin-bottom: 6px;
+        }
+        .item-card .item-delete {
+          position: absolute; top: 4px; right: 4px;
+          background: var(--danger); color: #fff;
+          border: none; border-radius: 50%;
+          width: 20px; height: 20px;
+          font-size: 0.75rem; line-height: 1;
+          cursor: pointer; opacity: 0;
+          transition: opacity 0.15s;
+        }
+        .item-card:hover .item-delete { opacity: 1; }
+        .empty-folder {
+          grid-column: 1 / -1; text-align: center;
+          color: #aaa; padding: 40px 0; font-size: 0.9rem;
+        }
+        .upload-zone {
+          border: 2px dashed var(--border);
+          border-radius: var(--radius);
+          padding: 24px 12px; text-align: center;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+          margin-bottom: 12px;
+          display: block;
+        }
+        .upload-zone:hover,
+        .upload-zone.dragover {
+          border-color: var(--primary);
+          background: var(--gray);
+        }
+        .upload-zone .up-icon {
+          font-size: 2rem; color: var(--primary); margin-bottom: 6px;
+        }
+        .upload-zone p {
+          margin: 4px 0; font-size: 0.85rem; color: #666;
+        }
+        .upload-zone input[type=file] { display: none; }
+        .new-folder-row {
+          display: flex; gap: 6px; margin-bottom: 12px;
+        }
+        .new-folder-row input {
+          flex: 1; padding: 6px 10px;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          font-family: inherit; font-size: 0.85rem;
+        }
+        .btn {
+          border: none; border-radius: var(--radius);
+          padding: 7px 12px; font-family: inherit;
+          font-size: 0.85rem; font-weight: 500;
+          cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-danger  { background: var(--danger);  color: #fff; }
+        .btn-gray    { background: var(--gray); color: var(--text); border: 1px solid var(--border); }
+        .btn-block   { width: 100%; }
+        .upload-info {
+          font-size: 0.75rem; color: #888;
+          margin-top: 8px; line-height: 1.5;
+        }
+        .preview-modal {
+          display: none; position: fixed; inset: 0;
+          background: rgba(0,0,0,0.75); z-index: 100;
+          align-items: center; justify-content: center; padding: 20px;
+        }
+        .preview-modal.show { display: flex; }
+        .preview-modal img {
+          max-width: 90vw; max-height: 85vh;
+          border-radius: var(--radius);
+          box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        .preview-modal .close-btn {
+          position: absolute; top: 16px; right: 24px;
+          background: var(--bg); border: none;
+          border-radius: 50%; width: 36px; height: 36px;
+          font-size: 1.2rem; cursor: pointer;
+        }
+        .toast {
+          position: fixed; bottom: 24px; left: 50%;
+          transform: translateX(-50%) translateY(100px);
+          background: var(--text); color: #fff;
+          padding: 10px 20px; border-radius: var(--radius);
+          box-shadow: var(--shadow);
+          opacity: 0; transition: all 0.3s;
+          z-index: 200; font-size: 0.9rem;
+        }
+        .toast.show {
+          opacity: 1; transform: translateX(-50%) translateY(0);
+        }
+        @media (max-width: 900px) {
+          .vault-container { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+          header { padding: 12px 16px; }
+          header h1 { font-size: 1.05rem; }
+          header .back-link { font-size: 0.85rem; }
+          .breadcrumb-bar { padding: 10px 16px; }
+          .content-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+          .item-card .item-mark { font-size: 2rem; }
+        }
+        @media (max-width: 480px) {
+          header h1 { font-size: 0.95rem; }
+          .content-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+          .item-card { padding: 8px 4px; }
+          .item-card .item-name { font-size: 0.72rem; }
+          .vault-panel { padding: 12px; }
+        }
+      </style><header><a class="back-link" href="https://harakiriizm-01.vercel.app/">← トップに戻る</a><h1>秘密のフォルダ</h1><a class="hidden-star" href="https://harakiriizm-01.vercel.app/result.html">＊</a></header><div class="breadcrumb-bar"><div><div class="current-label">現在のフォルダ</div><div class="current-folder" id="current-folder-name">/</div></div><div class="breadcrumb-path" id="breadcrumb-path"><a>root</a></div></div><main class="vault-container"><aside class="vault-panel"><h2>📂 フォルダツリー</h2><ul class="folder-tree" id="folder-tree"><li class="active" style="padding-left:8px" title="/"><span class="tree-icon">📁</span>root</li></ul></aside><section class="vault-panel"><h2 id="content-title">📁 内部構造</h2><div class="content-grid" id="content-grid"><div class="empty-folder">このフォルダは空です。右側からアップロード／フォルダ作成ができます。</div></div></section><aside class="vault-panel"><h2>⬆ アップロード</h2><label class="upload-zone" id="upload-zone"><div class="up-icon">📤</div><p><strong>クリックまたはドロップ</strong></p><p style="font-size:0.75rem">画像ファイルをここへ</p><input type="file" id="file-input" accept="image/*" multiple=""/></label><div class="new-folder-row"><input type="text" id="new-folder-input" placeholder="新規フォルダ名" value=""/><button class="btn btn-primary" id="btn-create-folder">作成</button></div><button class="btn btn-gray btn-block" id="btn-go-up" style="margin-bottom:8px" disabled="">↑ 上の階層へ</button><button class="btn btn-danger btn-block" id="btn-clear-folder">このフォルダを空にする</button><div class="upload-info">※ 画像は JPEG 形式で localStorage に保存されます。<br/>容量制限（約 5MB 前後）を超えるとエラーになります。</div></aside></main><div class="preview-modal"><button class="close-btn">×</button></div><div class="toast"></div><script src="/_next/static/chunks/webpack-5adebf9f62dc3001.js" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[7555,[],\"\"]\n3:I[1295,[],\"\"]\n4:I[894,[],\"ClientPageRoot\"]\n5:I[5166,[\"577\",\"static/chunks/app/photo/page-420b6c4615f32df4.js\"],\"default\"]\n8:I[9665,[],\"OutletBoundary\"]\nb:I[9665,[],\"ViewportBoundary\"]\nd:I[9665,[],\"MetadataBoundary\"]\nf:I[6614,[],\"\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"LtK5RJz9Iwowz2Sn6qe2-\",\"p\":\"\",\"c\":[\"\",\"photo\"],\"i\":false,\"f\":[[[\"\",{\"children\":[\"photo\",{\"children\":[\"__PAGE__\",{}]}]},\"$undefined\",\"$undefined\",true],[\"\",[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[\"photo\",[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[\"__PAGE__\",[\"$\",\"$1\",\"c\",{\"children\":[[\"$\",\"$L4\",null,{\"Component\":\"$5\",\"searchParams\":{},\"params\":{},\"promises\":[\"$@6\",\"$@7\"]}],\"$undefined\",null,[\"$\",\"$L8\",null,{\"children\":[\"$L9\",\"$La\",null]}]]}],{},null,false]},null,false]},null,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$1\",\"EFTwIX4YQRrSIYcpTIXbb\",{\"children\":[[\"$\",\"$Lb\",null,{\"children\":\"$Lc\"}],null]}],[\"$\",\"$Ld\",null,{\"children\":\"$Le\"}]]}],false]],\"m\":\"$undefined\",\"G\":[\"$f\",\"$undefined\"],\"s\":false,\"S\":true}\n"])</script><script>self.__next_f.push([1,"6:{}\n7:{}\n"])</script><script>self.__next_f.push([1,"c:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n9:null\n"])</script><script>self.__next_f.push([1,"a:null\ne:[[\"$\",\"title\",\"0\",{\"children\":\"秘密のフォルダ | harakiriizm\"}]]\n"])</script></body></html>

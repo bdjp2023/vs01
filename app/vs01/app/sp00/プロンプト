@@ -1,0 +1,90 @@
+役割
+あなたは、ウェブスクレイピングとデータ倫理に精通した上級Python開発者エージェントです。安全性、堅牢性、検知回避、データ倫理を最優先にタスクを実行してください。
+
+最終目標
+input.json に厳密に従い、指定されたウェブサイトからサーバーに過度な負荷をかけないよう配慮しながら情報を収集し、output_YYYY-MM-DD.csv形式で結果を出力する、堅牢で実用性の高いPythonスクリプト（main.py）を作成してください。
+
+設定ファイル input.json
+スクレイピング動作は以下の構造を持つJSONファイルで制御されます。必ず配列の**最初の要素（index 0）**のみを処理対象とします。
+[
+  {
+    "hp": "http://books.toscrape.com/",
+    "jump": "http://books.toscrape.com/catalogue/page-50.html",
+    "back": "//ul[@class='pager']/li[@class='previous']/a",
+    "su1": "article.product_pod h3 a",
+    "su2": ".product_price .price_color",
+    "su3": "",
+    "su4": "",
+    "su5": "",
+    "su6": ""
+  }
+]
+
+解釈ルール（厳守）
+
+hp: ドメインのベースURL（robots.txtチェック用）
+jump: 最初にアクセスするURL
+back: 前のページへ移動するためのXPathセレクター
+su1, su2, ... : 「su」+数字のキーのみ対象。キー名をそのままCSVの列名（ヘッダー）とし、値はCSSセレクターとして使用。
+値が空文字列""の場合は、その列を作成せず無視する。
+1ページに複数の商品がある場合は、すべての商品について1行ずつデータを作成する。
+ナビゲーション戦略（逆順ページネーション）
+
+jump URLに直接アクセスして処理開始
+現在のページでデータ抽出を実行
+backセレクターでリンクを探し、見つかればクリックして前のページへ移動
+リンクが見つからなくなったら処理終了
+必須ライブラリ（必ず使用）
+
+Playwright, BeautifulSoup4, pandas, time, random, logging, fake-useragent
+追加許可ライブラリ（必要に応じて使用可）
+
+requests, urllib.robotparser（robots.txt解析用）
+playwright-stealth（強く推奨）
+絶対遵守事項
+
+1. robots.txtの遵守
+hpのドメインからrobots.txtを取得・解析し、アクセス予定のパスがDisallowされている場合は、警告ログを出力して処理を即時終了すること。
+
+2. 低負荷・人間らしい運用（矛盾解消済み）
+各ページロード・遷移後に 5〜18秒の間で強くランダム化した待機 を必ず入れる（random.triangular(5, 18, 9)を推奨）
+単なるsleepだけでなく、以下の人間らしい行動を適宜組み込む：
+ページ内をランダムにスクロール（複数回）
+マウスの軽い移動
+要素へのホバー（可能な場合）
+headless=Falseで起動（本番運用時は環境に応じて切り替え可能とするコメントを入れる）
+
+3. データ抽出戦略（動的サイト対応強化）
+可能な限り PlaywrightのLocator（page.locator()）を第一優先で使用
+Locatorで見つからない場合はBeautifulSoupをフォールバックとして使用
+要素待ちは wait_for_selector() + page.wait_for_load_state("networkidle") を適切に組み合わせる
+要素が見つからない場合は None または空文字を記録し、エラーログを残して処理を継続
+
+4. 堅牢性・検知回避
+各su*抽出時に例外が発生してもスクリプトが停止しないようにする
+
+Cloudflare、DataDome、PerimeterXなどのブロックページを検知した場合は詳細ログを出力して安全に停止
+ユーザーエージェントは毎回fake_useragentで変更
+必要に応じてplaywright-stealthを適用
+
+5. データ倫理
+個人情報、ログイン情報は一切取得しない
+過剰なリクエストは絶対に行わない
+実行ステップ（AIが実装すべき流れ）
+
+input.jsonを読み込み、最初のオブジェクトをconfigとして取得
+config["hp"]に基づきrobots.txtをチェック
+Playwrightを起動し、config["jump"]にアクセス
+設定された全su*項目を動的に読み取り、列名とセレクターとして処理
+ページ内の全商品についてデータを抽出し、pandas DataFrameに蓄積
+config["back"]で前のページへ移動（見つからなければ終了）
+すべての処理終了後、output_{YYYY-MM-DD}.csvとして保存（例：output_2026-06-06.csv）
+全過程を詳細にscrape.logに記録（進捗、取得件数、エラー、警告を含む）
+
+成果物
+main.py（完全に実行可能なスクリプト）
+requirements.txt（使用ライブラリを全て記載）
+input.json（サンプルとしてbooks.toscrape.com用のものを含める）
+
+この仕様をすべて満たし、動的商用サイトでも可能な限り長く生き残れる実用性の高いコードを作成してください。コメントも適切に含め、保守性・可読性を高めてください。
+

@@ -1,0 +1,12 @@
+推奨構成（最も現実的な組み合わせ） pip install 
+メイン: Playwright（Seleniumより高速で検知耐性が高いため優先）
+User-Agent回転: fake-useragent
+人間らしい行動模倣: random + time（sleep、スクロールのランダム化）
+HTML解析: BeautifulSoup4
+データ整形・保存: pandas
+監視: logging
+品名変換　pandas rapidfuzz
+見張り番　pip install -r requirements.txt
+
+pip install pandas rapidfuzz
+pip freeze > requirements.txt

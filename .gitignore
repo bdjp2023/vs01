@@ -1,5 +1,18 @@
+cat > .gitignore << 'EOF'
+# 仮想環境（絶対にGitHubに上げない）
 venv/
+env/
+.venv/
 **/venv/
+
+# Pythonのキャッシュ
 __pycache__/
 *.pyc
+*.pyo
+
+# VSCode設定
 .vscode/
+
+# Jupyter関連
+.ipynb_checkpoints/
+EOF
