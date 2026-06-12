@@ -1,2 +1,0 @@
-#   フォルダパスを/home/bdjp/Desktop/app のように記載する
-/home/bdjp/Desktop//home/bdjp/Desktop/vs01/app
