@@ -1,0 +1,156 @@
+# File: STRUCTURE.txt
+================================================================================
+ 逆順ページネーション スクレイパー  構造・要素一覧（更新版）
+================================================================================
+
+【全体の処理フロー】
+ main.py 起動
+   0. check_dependencies()       依存ライブラリ診断（必須欠如なら sys.exit(1)）
+   1. run() 内で遅延 import       ← 依存チェック通過後に重い import を実行
+   2. setup_logging()            ロガー構築（config.py）
+   3. load_config()              inputizm.json 読込（config.py）
+   4. extract_su_columns()       su1..su6 抽出・空欄無視（config.py）
+   5. check_robots()             robots.txt 判定（browser_utils.py）
+   6. Playwright 起動 → apply_stealth()
+   7. page.goto(jump)            開始URL（最終ページ付近）へ
+   8. ループ（最大 MAX_PAGES=50）
+        detect_block → wait_with_retry → human_like_behavior
+        → extract_page_data → human_like_delay → navigate_back
+   9. save_data()                CSV + Excel 出力（data_handler.py）
+
+================================================================================
+ ファイル別 役割
+================================================================================
+ constants.py     定数・ロガー取得窓口
+ config.py        ロギング設定・設定読込・セレクター抽出
+ browser_utils.py ブラウザ低レベル操作（Stealth/robots/人間挙動/判別）
+ scraper_core.py  抽出・前ページ遷移・リトライ・スクショ
+ data_handler.py  CSV/Excel 保存
+ main.py          エントリポイント（依存チェック＋走査ループ）
+
+================================================================================
+ 起動時の import 設計（重要）
+================================================================================
+ ・main.py 冒頭の import は importlib.util / sys のみ（軽量）。
+ ・playwright / pandas / bs4 / 自作モジュールは run() 内で「遅延 import」。
+ ・理由: 依存不足時にトレースバックで落とさず、check_dependencies() の
+         案内メッセージを表示してから安全終了（sys.exit(1)）するため。
+
+================================================================================
+ 設定キー（inputizm.json）と使用箇所
+================================================================================
+ キー    意味               形式      使用ファイル / 関数
+ ------  -----------------  --------  --------------------------------------
+ hp      起点URL(robots基準) URL       main.run → check_robots
+ jump    走査開始URL         URL       main.run → page.goto
+ back    前ページへ戻る      XPath     main.run → navigate_back
+ su1     抽出列1(基準)       CSS       extract_su_columns → extract_page_data
+ su2     抽出列2             CSS       同上
+ su3..6  抽出列(空欄)         -         空文字は自動無視（取得対象外）
+
+ ※ back は XPath、su* は CSS の混在 → to_locator() が自動判別。
+
+================================================================================
+ 定数一覧（constants.py）
+================================================================================
+ INPUT_FILE       "inputizm.json"   設定ファイル名（config / main）
+ LOG_FILE         "scrape.log"      ログ出力先（config.setup_logging）
+ MAX_PAGES        50                走査上限（main のループ）
+ BLOCK_SIGNATURES [...]             ブロック判定語（detect_block）
+ WAIT_MIN/MAX/MODE 5.0/18.0/9.0     待機の三角分布（human_like_delay）
+
+================================================================================
+ モジュールレベル変数（main.py）
+================================================================================
+ HEADLESS         False             ヘッドフル起動（ユーザー要望）
+ _DEPENDENCIES    [...]             (モジュール名, pip名, 必須か) のリスト
+
+================================================================================
+ 関数一覧（定義ファイル → 主な呼び出し元）
+================================================================================
+ [main.py]
+   check_dependencies()     __main__（run より前に実行）★新規
+     └ 必須欠如 → sys.exit(1)／任意欠如 → 警告のみ継続
+   run()                    __main__（依存チェック通過後）
+     └ 内部で全モジュールを遅延 import
+
+ [constants.py]
+   get_logger()             各モジュールのロガー取得
+
+ [config.py]
+   setup_logging()          main.run（最初に1回）
+   load_config()            main.run
+   extract_su_columns()     main.run
+
+ [browser_utils.py]
+   get_user_agent()         main.run
+   apply_stealth()          main.run
+   to_locator()             scraper_core 各所（XPath/CSS判別）
+   check_robots()           main.run
+   human_like_delay()       main.run（毎ページ）
+   human_like_behavior()    main.run（毎ページ）
+   detect_block()           main.run（毎ページ冒頭）
+   wait_for_network_idle()  main.run（遷移後）
+
+ [scraper_core.py]
+   wait_with_retry()        main.run（基準要素待機）
+   extract_page_data()      main.run（抽出）
+     ├ _extract_with_locator()  Locator経路（第一優先）
+     └ _extract_with_bs4()      BS4経路（フォールバック）
+   navigate_back()          main.run（前ページ遷移・終了判定）
+   save_screenshot()        main.run（ブロック/エラー時）
+
+ [data_handler.py]
+   save_data()              main.run（終了時）
+     └ _build_filename()    出力パス生成
+
+================================================================================
+ 依存ライブラリ（_DEPENDENCIES の内容）
+================================================================================
+ モジュール名         pip名                必須   不足時の挙動
+ ------------------  -------------------  ----  ------------------------------
+ playwright          playwright           必須   sys.exit(1) で停止
+ pandas              pandas               必須   sys.exit(1) で停止
+ bs4                 beautifulsoup4       必須   sys.exit(1) で停止
+ openpyxl            openpyxl             任意   Excel出力のみ失敗（CSVは出力）
+ fake_useragent      fake-useragent       任意   固定UAにフォールバック
+ playwright_stealth  playwright-stealth   任意   Stealth無しで継続（警告のみ）
+
+ ※ 上記に加え Chromium バイナリが必須:
+    playwright install chromium
+
+================================================================================
+ 出力ファイル
+================================================================================
+ output/output_YYYY-MM-DD.csv    （utf-8-sig）
+ output/output_YYYY-MM-DD.xlsx   （openpyxl／未導入時はスキップ）
+ scrape.log                      ログ
+ screenshots/*.png               エラー/ブロック時の画面
+
+================================================================================
+ 推奨セットアップ
+================================================================================
+ pip install playwright pandas beautifulsoup4 openpyxl fake-useragent
+ pip install playwright-stealth   # 任意（未導入でも動作）
+ playwright install chromium
+
+================================================================================
+ 統合時の解決事項（コード矛盾の処理）
+================================================================================
+ 1. load_config 重複       → ログ対応版に一本化＋型/空チェック強化
+ 2. MAX_PAGES 500 vs 50    → 50 を採用（安全弁優先）
+ 3. logger basicConfig     → 破棄し setup_logging() に統一
+ 4. active_selectors(手書) → 破棄し extract_su_columns() に統一
+ 5. import 不足(re/urlparse/robotparser) → 補完
+ 6. navigate_back 未完成   → XPath対応の完全版で実装
+ 7. 依存チェック追加        → check_dependencies() ＋ run() 内遅延 import ★新規
+
+================================================================================
+ 更新履歴
+================================================================================
+ v1.0  6ファイル構成で初版作成
+ v1.1  main.py に check_dependencies() を統合
+       ・起動時に必須/任意ライブラリを診断
+       ・run() 内で重い import を遅延化（安全終了のため）
+       ・本 STRUCTURE.txt を更新版に改訂
+================================================================================

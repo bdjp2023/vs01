@@ -1,0 +1,14 @@
+2026-06-12 20:04:51 [INFO] ============================================================
+2026-06-12 20:04:51 [INFO] スクレイピング処理を開始します。
+2026-06-12 20:04:51 [INFO] 設定を読み込みました（配列 index 0 を使用）。
+2026-06-12 20:04:51 [ERROR] 予期しない致命的エラーが発生しました: name 're' is not defined
+Traceback (most recent call last):
+  File "/tmp/ipykernel_112065/3963349638.py", line 642, in <module>
+    run()
+  File "/tmp/ipykernel_112065/3963349638.py", line 500, in run
+    columns = extract_su_columns(config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/ipykernel_112065/3963349638.py", line 196, in extract_su_columns
+    su_pattern = re.compile(r"^su(\d+)$")
+                 ^^
+NameError: name 're' is not defined
