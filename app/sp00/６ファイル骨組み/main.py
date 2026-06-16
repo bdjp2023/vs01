@@ -217,7 +217,7 @@ def run() -> None:
             # 開始ページへ遷移
             print(f"  [DEBUG] 開始ページに移管します。")
             logger.info("開始ページへ遷移します: %s", jump)
-            page.goto(jump, wait_until="domcontentloaded", timeout=150)
+            page.goto(jump, wait_until="domcontentloaded", timeout=15000)
             wait_for_network_idle(page)
             print(f"  [OK] 開始ページに移動しました。現在のURL: {page.url}")
 

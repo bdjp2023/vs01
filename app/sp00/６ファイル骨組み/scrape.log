@@ -19,3 +19,63 @@
 2026-06-17 00:24:08 [INFO] 有効セレクター数: 2 個
 2026-06-17 00:24:09 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
 2026-06-17 00:24:09 [INFO] robots.txt によりアクセス許可: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:16:35 [INFO] ============================================================
+2026-06-17 05:16:35 [INFO] スクレイパーを開始します。
+2026-06-17 05:16:35 [INFO] 設定を読み込みました（配列 index 0 を使用）: inputizm.json
+2026-06-17 05:16:35 [INFO] 抽出対象の列: ['su1', 'su2']
+2026-06-17 05:16:35 [INFO] hp   : http://books.toscrape.com/
+2026-06-17 05:16:35 [INFO] jump : http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:16:35 [INFO] back : /html/body/div/div/div/div/section/div[2]/div/ul/li[1]/a
+2026-06-17 05:16:35 [INFO] 有効セレクター数: 2 個
+2026-06-17 05:16:35 [INFO] 有効セレクター数: 2 個
+2026-06-17 05:16:35 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-17 05:16:35 [INFO] robots.txt によりアクセス許可: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:16:38 [INFO] Playwright Stealth を適用しました。
+2026-06-17 05:16:38 [INFO] 開始ページへ遷移します: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:16:38 [ERROR] メインループで予期せぬ例外: Page.goto: Timeout 150ms exceeded.
+Call log:
+  - navigating to "http://books.toscrape.com/catalogue/page-3.html", waiting until "domcontentloaded"
+
+2026-06-17 05:16:40 [INFO] スクリーンショットを保存: screenshots/fatal_error.png
+2026-06-17 05:16:40 [INFO] ============================================================
+2026-06-17 05:16:40 [INFO] 走査終了。総収集行数: 0 行
+2026-06-17 05:16:40 [WARNING] 保存対象データが空です。出力をスキップします。
+2026-06-17 05:16:40 [INFO] ブラウザを閉じました。処理完了。
+2026-06-17 05:22:43 [INFO] ============================================================
+2026-06-17 05:22:43 [INFO] スクレイパーを開始します。
+2026-06-17 05:22:43 [INFO] 設定を読み込みました（配列 index 0 を使用）: inputizm.json
+2026-06-17 05:22:43 [INFO] 抽出対象の列: ['su1', 'su2']
+2026-06-17 05:22:43 [INFO] hp   : http://books.toscrape.com/
+2026-06-17 05:22:43 [INFO] jump : http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:22:43 [INFO] back : /html/body/div/div/div/div/section/div[2]/div/ul/li[1]/a
+2026-06-17 05:22:43 [INFO] 有効セレクター数: 2 個
+2026-06-17 05:22:44 [INFO] 有効セレクター数: 2 個
+2026-06-17 05:22:44 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-17 05:22:44 [INFO] robots.txt によりアクセス許可: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:22:46 [INFO] Playwright Stealth を適用しました。
+2026-06-17 05:22:46 [INFO] 開始ページへ遷移します: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:22:48 [INFO] --------------------------------------------------
+2026-06-17 05:22:48 [INFO] ページ 1 / 最大 50 を処理中: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 05:22:56 [INFO] Locator で 20 行を抽出しました。
+2026-06-17 05:22:56 [INFO] 累計収集行数: 20 行
+2026-06-17 05:22:56 [INFO] 待機: 8.41 秒
+2026-06-17 05:23:05 [INFO] 前ページへ遷移: http://books.toscrape.com/catalogue/page-3.html -> http://books.toscrape.com/catalogue/page-2.html
+2026-06-17 05:23:06 [INFO] --------------------------------------------------
+2026-06-17 05:23:06 [INFO] ページ 2 / 最大 50 を処理中: http://books.toscrape.com/catalogue/page-2.html
+2026-06-17 05:23:10 [INFO] Locator で 20 行を抽出しました。
+2026-06-17 05:23:10 [INFO] 累計収集行数: 40 行
+2026-06-17 05:23:10 [INFO] 待機: 9.04 秒
+2026-06-17 05:23:20 [INFO] 前ページへ遷移: http://books.toscrape.com/catalogue/page-2.html -> http://books.toscrape.com/catalogue/page-1.html
+2026-06-17 05:23:21 [INFO] --------------------------------------------------
+2026-06-17 05:23:21 [INFO] ページ 3 / 最大 50 を処理中: http://books.toscrape.com/catalogue/page-1.html
+2026-06-17 05:23:26 [INFO] Locator で 20 行を抽出しました。
+2026-06-17 05:23:26 [INFO] 累計収集行数: 60 行
+2026-06-17 05:23:26 [INFO] 待機: 8.72 秒
+2026-06-17 05:23:35 [INFO] 戻るリンクが見つかりません（最初のページと判断）。
+2026-06-17 05:23:35 [INFO] これ以上戻れないため走査を終了します。
+2026-06-17 05:23:35 [INFO] ============================================================
+2026-06-17 05:23:35 [INFO] 走査終了。総収集行数: 60 行
+2026-06-17 05:23:35 [INFO] 重複除去: 60 -> 60 行
+2026-06-17 05:23:35 [INFO] CSV を出力しました: output/output_2026-06-17.csv（60 行）
+2026-06-17 05:23:35 [INFO] Excel を出力しました: output/output_2026-06-17.xlsx（60 行）
+2026-06-17 05:23:35 [INFO] ブラウザを閉じました。処理完了。
