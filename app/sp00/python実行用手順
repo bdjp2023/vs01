@@ -42,3 +42,11 @@ pip install pandas numpy requests
 
 # 使用したライブラリを記録（次回から便利）
 pip freeze > requirements.txt
+
+
+# 1. 仮想環境を有効にする（(venv) という表示が先頭に出ます）
+source ../../../venv/bin/activate
+※ ../../../ は、現在の ６ファイル骨組み フォルダから見て
+ venv が3つ上の階層にあるための指定です。
+# 2. その状態で main.py を実行する
+python main.py

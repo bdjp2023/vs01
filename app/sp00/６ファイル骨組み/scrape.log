@@ -1,0 +1,21 @@
+2026-06-17 00:09:48 [INFO] ============================================================
+2026-06-17 00:09:48 [INFO] スクレイパーを開始します。
+2026-06-17 00:09:48 [INFO] 設定を読み込みました（配列 index 0 を使用）: inputizm.json
+2026-06-17 00:09:48 [INFO] 抽出対象の列: ['su1', 'su2']
+2026-06-17 00:09:48 [INFO] 有効セレクター数: 2 個
+2026-06-17 00:09:49 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-17 00:09:49 [INFO] robots.txt によりアクセス許可: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 00:14:55 [INFO] ============================================================
+2026-06-17 00:14:55 [INFO] スクレイパーを開始します。
+2026-06-17 00:14:55 [INFO] 設定を読み込みました（配列 index 0 を使用）: inputizm.json
+2026-06-17 00:14:55 [INFO] 抽出対象の列: ['su1', 'su2']
+2026-06-17 00:14:55 [INFO] 有効セレクター数: 2 個
+2026-06-17 00:14:56 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-17 00:14:56 [INFO] robots.txt によりアクセス許可: http://books.toscrape.com/catalogue/page-3.html
+2026-06-17 00:24:08 [INFO] ============================================================
+2026-06-17 00:24:08 [INFO] スクレイパーを開始します。
+2026-06-17 00:24:08 [INFO] 設定を読み込みました（配列 index 0 を使用）: inputizm.json
+2026-06-17 00:24:08 [INFO] 抽出対象の列: ['su1', 'su2']
+2026-06-17 00:24:08 [INFO] 有効セレクター数: 2 個
+2026-06-17 00:24:09 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-17 00:24:09 [INFO] robots.txt によりアクセス許可: http://books.toscrape.com/catalogue/page-3.html
