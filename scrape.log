@@ -12,3 +12,20 @@ Traceback (most recent call last):
     su_pattern = re.compile(r"^su(\d+)$")
                  ^^
 NameError: name 're' is not defined
+2026-06-12 21:44:24 [INFO] ============================================================
+2026-06-12 21:44:24 [INFO] スクレイピング処理を開始します。
+2026-06-12 21:44:24 [INFO] 設定を読み込みました（配列 index 0 を使用）。
+2026-06-12 21:44:24 [INFO] 抽出対象の列: ['su1', 'su2']
+2026-06-12 21:44:24 [INFO] robots.txt を取得しました: http://books.toscrape.com/robots.txt
+2026-06-12 21:44:24 [INFO] robots.txt によりアクセスが許可されています: http://books.toscrape.com/catalogue/page-3.html
+2026-06-12 21:44:24 [ERROR] 予期しない致命的エラーが発生しました: It looks like you are using Playwright Sync API inside the asyncio loop.
+Please use the Async API instead.
+Traceback (most recent call last):
+  File "<ipython-input-2-032267d5bf29>", line 577, in <module>
+    run()
+  File "<ipython-input-2-032267d5bf29>", line 473, in run
+    with sync_playwright() as p:
+  File "/home/bdjp/Desktop/vs01/venv/lib/python3.11/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
+    raise Error(
+playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
+Please use the Async API instead.

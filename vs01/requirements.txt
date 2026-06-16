@@ -1,0 +1,6 @@
+Playwright
+fake_useragent
+jupyter
+notebook
+pytest
+requests
