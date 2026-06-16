@@ -47,7 +47,6 @@ _DEPENDENCIES = [
     ("playwright_stealth", "playwright-stealth", False),
 ]
 
-
 def check_dependencies() -> bool:
     """
     依存ライブラリの導入状況を確認する。
@@ -129,9 +128,19 @@ def run() -> None:
             navigate_back,
             save_screenshot,
             wait_with_retry,
+            scroll_to_bottom,      # 追加
+            click_load_more,       # 追加
+            wait_for_stable_dom    # 追加
         )
         print("  [OK] インポート成功")
-        print("  [HINT]  現在のディレクトリ: {os.getcwd()}")
+        print(f"  [HINT]  現在のディレクトリ: {os.getcwd()}")
+        # ここにあった return は削除しました（戻ってしまうと以下の処理が動かないため）
+
+    except ImportError as e:
+        print(f" [ERROR] モジュールの読み込みに失敗しました: {e}")
+        return
+    except Exception as e:
+        print(f" [ERROR] 予期せぬエラーが発生しました: {e}")
         return
         
     # --- ロガー初期化（最初に行う） ---
@@ -142,17 +151,17 @@ def run() -> None:
     # --- 設定読み込み ---
     print(f"\n--- [DEBUG] ３．設定ファイル読み込み開始:{INPUT_FILE} ---")
     if not os.path.exists(INPUT_FILE):
-        print(""  [ERROR]  入力ファイルが見つかりません: {os.path.abspath(INPUT_FILE)}")
+        print(f"  [ERROR]  入力ファイルが見つかりません: {os.path.abspath(INPUT_FILE)}")
         return
         
-    tey:
+    try:  # tey から try に修正
         config = load_config(INPUT_FILE)
         print(f"  [OK]  入力データを取得しました。キー一覧: {list(config.keys())}")
         
-        hp = config.get("hp", "")               # 起点（robots 判定の基準ドメイン）
-        jump = config.get("jump", "")           # 走査開始 URL（最終ページ付近）
-        back_selector = config.get("back", "")  # 前ページへ戻る XPath
-        columns = extract_su_columns(config)    # {su1:..., su2:...}（空欄は自動無視）
+        hp = config.get("hp", "")
+        jump = config.get("jump", "")
+        back_selector = config.get("back", "")
+        columns = extract_su_columns(config)
 
         logger.info("hp   : %s", hp)
         logger.info("jump : %s", jump)
@@ -167,7 +176,7 @@ def run() -> None:
         logger.info("有効セレクター数: %d 個", len(columns))
     except Exception as e:
         print(f" [ERROR] 入力項目読み込み中の例外エラー発生: {e}")
-        retun
+        return
 
     # --- 必須設定の検証 ---
     if not jump:
@@ -244,19 +253,22 @@ def run() -> None:
                 human_like_behavior(page)
 
                 # --- 動的ロード方式に応じた処理 ---
+                # paging_mode は設定から取得（将来的な拡張用として保持）
                 paging_mode = config.get("paging_mode", "reverse")
+
                 if config.get("infinite_scroll"):
-                    from scraper_core import scroll_to_bottom
+                    # 無限スクロールの場合
                     total = scroll_to_bottom(page, base_selector)
                     logger.info("無限スクロール完了: %d 件をロード", total)
+                
                 elif config.get("load_more_selector"):
-                    from scraper_core import click_load_more
+                    # 「もっと見る」ボタンがある場合
                     clicks = click_load_more(page, config["load_more_selector"])
                     logger.info("「もっと見る」を %d 回クリック", clicks)
+                
                 else:
-                    from scraper_core import wait_for_stable_dom
+                    # 通常のページ遷移の場合、DOMが安定するのを待つ
                     wait_for_stable_dom(page, base_selector, timeout=8.0)
-
                 # データ抽出
                 rows = extract_page_data(page, columns)
                 if rows:
@@ -287,13 +299,13 @@ def run() -> None:
                 )
 
         except Exception as exc:
-            print(f"  [FATAL ERROR]メインループで予期せぬ例外:\n(exc)")
+            print(f"  [FATAL ERROR]メインループで予期せぬ例外:\n{exc}")
             logger.error("メインループで予期せぬ例外: %s", exc)
             save_screenshot(page, "fatal_error")
         finally:
             # --- 後始末と保存 ---
             print("\n--- [DEBUG] ６． 最終処理 ---")
-            print(f"  [INFO] 総収集 件数: {len(all_rows)}")
+            print(f"  [INFO] 総収集 件数: {len(all_rows)}") # all_lows から修正
             logger.info("=" * 60)
             logger.info("走査終了。総収集行数: %d 行", len(all_rows))
             save_data(all_rows)

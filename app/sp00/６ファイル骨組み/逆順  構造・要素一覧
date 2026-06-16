@@ -50,15 +50,21 @@
 
  ※ back は XPath、su* は CSS の混在 → to_locator() が自動判別。
 
+追加が必用？
+ キー                意味                形式      使用ファイル / 関数
+ ------------------  ------------------  --------  --------------------------------------
+ paging_mode         ページング動作モード  string    main.run (初期値 "reverse")
+ infinite_scroll     無限スクロール有効化  bool      main.run → scroll_to_bottom
+ load_more_selector  「もっと見る」ボタン  CSS       main.run → click_load_more
+
 ================================================================================
  定数一覧（constants.py）
 ================================================================================
- INPUT_FILE       "inputizm.json"   設定ファイル名（config / main）
- LOG_FILE         "scrape.log"      ログ出力先（config.setup_logging）
- MAX_PAGES        50                走査上限（main のループ）
- BLOCK_SIGNATURES [...]             ブロック判定語（detect_block）
- WAIT_MIN/MAX/MODE 5.0/18.0/9.0     待機の三角分布（human_like_delay）
-キー一覧: {list(config.keys
+ INPUT_FILE       "inputizm.json"   設定ファイル名
+ LOG_FILE         "scrape.log"      ログ出力先
+ MAX_PAGES        50                走査上限
+ BLOCK_SIGNATURES [...]             ブロック判定語
+ WAIT_MIN/MAX/MODE 5.0/18.0/9.0     待機の三角分布
 
 ================================================================================
  モジュールレベル変数（main.py）
@@ -93,6 +99,7 @@
    detect_block()           main.run（毎ページ冒頭）
    wait_for_network_idle()  main.run（遷移後）
 
+
  [scraper_core.py]
    wait_with_retry()        main.run（基準要素待機）
    extract_page_data()      main.run（抽出）
@@ -100,10 +107,14 @@
      └ _extract_with_bs4()      BS4経路（フォールバック）
    navigate_back()          main.run（前ページ遷移・終了判定）
    save_screenshot()        main.run（ブロック/エラー時）
+   scroll_to_bottom()       main.run（無限スクロール処理） ★新規追加
+   click_load_more()        main.run（「もっと見る」クリック） ★新規追加
+   wait_for_stable_dom()    main.run（DOM安定待機） ★新規追加
 
  [data_handler.py]
    save_data()              main.run（終了時）
      └ _build_filename()    出力パス生成
+
 
 ================================================================================
  依存ライブラリ（_DEPENDENCIES の内容）
@@ -151,7 +162,7 @@
 ================================================================================
  v1.0  6ファイル構成で初版作成
  v1.1  main.py に check_dependencies() を統合
-       ・起動時に必須/任意ライブラリを診断
-       ・run() 内で重い import を遅延化（安全終了のため）
-       ・本 STRUCTURE.txt を更新版に改訂
+ v1.2  動的ロード対応（無限スクロール／もっと見るボタン）を追加 ★今回
+       ・scraper_core.py に専用の制御関数を実装
+       ・main.py のループ内にロード処理を統合
 ================================================================================

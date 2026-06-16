@@ -261,3 +261,40 @@ def save_screenshot(page: Page, name: str) -> None:
         logger.info("スクリーンショットを保存: %s", path)
     except Exception as exc:
         logger.warning("スクリーンショット保存に失敗（無視）: %s", exc)
+
+# File: scraper_core.py
+import time
+from playwright.sync_api import Page
+
+def scroll_to_bottom(page: Page, selector: str) -> int:
+    """無限スクロールを行い、最終的な要素数を返す"""
+    last_count = 0
+    while True:
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        page.wait_for_timeout(2000)  # 読み込み待機
+        new_count = page.locator(selector).count()
+        if new_count == last_count:
+            break
+        last_count = new_count
+    return last_count
+
+def click_load_more(page: Page, selector: str) -> int:
+    """「もっと見る」ボタンを可能な限りクリックする"""
+    clicks = 0
+    while True:
+        button = page.locator(selector)
+        if button.is_visible() and button.is_enabled():
+            button.click()
+            page.wait_for_timeout(2000)
+            clicks += 1
+        else:
+            break
+    return clicks
+
+def wait_for_stable_dom(page: Page, selector: str, timeout: float = 8.0):
+    """DOMが安定する（要素が表示される）のを待つ"""
+    try:
+        page.wait_for_selector(selector, state="visible", timeout=timeout * 1000)
+    except:
+        pass
+

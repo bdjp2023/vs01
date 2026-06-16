@@ -30,6 +30,10 @@ BLOCK_SIGNATURES = [
     "access denied",
     "verify you are human",
     "just a moment",
+    "403 Forbidden",
+    "Access Denied",
+    "ロボットではありません",
+    "一時的にアクセスを制限"
 ]
 
 # ====================== 人間らしい待機（三角分布） ======================
