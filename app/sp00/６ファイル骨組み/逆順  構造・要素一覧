@@ -58,6 +58,7 @@
  MAX_PAGES        50                走査上限（main のループ）
  BLOCK_SIGNATURES [...]             ブロック判定語（detect_block）
  WAIT_MIN/MAX/MODE 5.0/18.0/9.0     待機の三角分布（human_like_delay）
+キー一覧: {list(config.keys
 
 ================================================================================
  モジュールレベル変数（main.py）

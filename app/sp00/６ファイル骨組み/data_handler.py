@@ -42,6 +42,9 @@ def save_data(rows: List[Dict[str, str]], drop_duplicates: bool = True) -> None:
         rows: 抽出済みの行データ（辞書のリスト）。
         drop_duplicates: 重複行を除去するか（既定 True）。
     """
+    
+    print("  data_handlerでの保存処理を開始します。")
+
     if not rows:
         logger.warning("保存対象データが空です。出力をスキップします。")
         return
@@ -57,14 +60,21 @@ def save_data(rows: List[Dict[str, str]], drop_duplicates: bool = True) -> None:
     csv_path = _build_filename("csv")
     try:
         df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+        print("  CSVで保存しました")
         logger.info("CSV を出力しました: %s（%d 行）", csv_path, len(df))
     except Exception as exc:
+        print("  CSV出力に失敗しました")
         logger.error("CSV 出力に失敗: %s", exc)
 
     # Excel 出力
     xlsx_path = _build_filename("xlsx")
     try:
         df.to_excel(xlsx_path, index=False, engine="openpyxl")
+        print("  エクセルの保存を完了しました。")
         logger.info("Excel を出力しました: %s（%d 行）", xlsx_path, len(df))
     except Exception as exc:
+        print("  エクセル出力失敗")
         logger.error("Excel 出力に失敗（openpyxl 未導入の可能性）: %s", exc)
+    
+    print("  data_handler の保存処理を完了しました。")
+        

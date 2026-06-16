@@ -26,6 +26,8 @@
 
 import importlib.util
 import sys
+import logging
+import os
 
 # ---------------------------------------------------------------------------
 # 依存ライブラリチェック
@@ -56,6 +58,7 @@ def check_dependencies() -> bool:
     Returns:
         bool: 必須がすべて揃っていれば True。
     """
+    print("\n--- [DEBUG]１．依存ライブラリのチェック開始 ---")
     missing_required = []
     missing_optional = []
 
@@ -65,7 +68,8 @@ def check_dependencies() -> bool:
                 missing_required.append(pip_name)
             else:
                 missing_optional.append(pip_name)
-
+        else:
+            print(f"  [OK] {module_name} は導入済みです。")
     # 任意ライブラリの不足は警告のみ（続行可能）
     if missing_optional:
         print("⚠️ 任意ライブラリが未導入です（機能制限あり・続行可能）:")
@@ -82,13 +86,14 @@ def check_dependencies() -> bool:
         print("   → playwright install chromium  も忘れずに実行してください。")
         return False
 
+    print("--- [DEBUG] 依存ライブラリのチェック完了 ---\n")
     return True
 
 
 # ---------------------------------------------------------------------------
 # メイン処理
 # ---------------------------------------------------------------------------
-# ヘッドレス指定（ユーザー要望によりヘッドフル）
+# ヘッドレス指定（ユーザー要望によりヘッドフル）False=なし
 HEADLESS = False
 
 
@@ -103,64 +108,92 @@ def run() -> None:
     """
     # --- 遅延 import（依存チェック通過後に実行） ---
     from typing import Dict, List
-
     from playwright.sync_api import sync_playwright
 
-    from browser_utils import (
-        apply_stealth,
-        check_robots,
-        detect_block,
-        get_user_agent,
-        human_like_behavior,
-        human_like_delay,
-        wait_for_network_idle,
-    )
-    from config import extract_su_columns, load_config, setup_logging
-    from constants import INPUT_FILE, MAX_PAGES
-    from data_handler import save_data
-    from scraper_core import (
-        extract_page_data,
-        navigate_back,
-        save_screenshot,
-        wait_with_retry,
-    )
-
+    print("　　[DEBUG]  スクレイピングのインポートを実行...")
+    try:
+        from browser_utils import (
+            apply_stealth,
+            check_robots,
+            detect_block,
+            get_user_agent,
+            human_like_behavior,
+            human_like_delay,
+            wait_for_network_idle,
+        )
+        from config import extract_su_columns, load_config, setup_logging
+        from constants import INPUT_FILE, MAX_PAGES
+        from data_handler import save_data
+        from scraper_core import (
+            extract_page_data,
+            navigate_back,
+            save_screenshot,
+            wait_with_retry,
+        )
+        print("  [OK] インポート成功")
+        print("  [HINT]  現在のディレクトリ: {os.getcwd()}")
+        return
+        
     # --- ロガー初期化（最初に行う） ---
     logger = setup_logging()
     logger.info("=" * 60)
     logger.info("スクレイパーを開始します。")
 
     # --- 設定読み込み ---
-    config = load_config(INPUT_FILE)
-    hp = config.get("hp", "")               # 起点（robots 判定の基準ドメイン）
-    jump = config.get("jump", "")           # 走査開始 URL（最終ページ付近）
-    back_selector = config.get("back", "")  # 前ページへ戻る XPath
-    columns = extract_su_columns(config)    # {su1:..., su2:...}（空欄は自動無視）
+    print(f"\n--- [DEBUG] ３．設定ファイル読み込み開始:{INPUT_FILE} ---")
+    if not os.path.exists(INPUT_FILE):
+        print(""  [ERROR]  入力ファイルが見つかりません: {os.path.abspath(INPUT_FILE)}")
+        return
+        
+    tey:
+        config = load_config(INPUT_FILE)
+        print(f"  [OK]  入力データを取得しました。キー一覧: {list(config.keys())}")
+        
+        hp = config.get("hp", "")               # 起点（robots 判定の基準ドメイン）
+        jump = config.get("jump", "")           # 走査開始 URL（最終ページ付近）
+        back_selector = config.get("back", "")  # 前ページへ戻る XPath
+        columns = extract_su_columns(config)    # {su1:..., su2:...}（空欄は自動無視）
 
-    logger.info("hp   : %s", hp)
-    logger.info("jump : %s", jump)
-    logger.info("back : %s", back_selector)
-    logger.info("有効セレクター数: %d 個", len(columns))
+        logger.info("hp   : %s", hp)
+        logger.info("jump : %s", jump)
+        logger.info("back : %s", back_selector)
+        logger.info("有効セレクター数: %d 個", len(columns))
+
+        print(f"  [DEBUG] hp: {hp}")
+        print(f"  [DEBUG] jump: {jump}")
+        print(f"  [DEBUG] back_selector: {back_selector}")
+        print(f"  [DEBUG] columns: {columns}")
+
+        logger.info("有効セレクター数: %d 個", len(columns))
+    except Exception as e:
+        print(f" [ERROR] 入力項目読み込み中の例外エラー発生: {e}")
+        retun
 
     # --- 必須設定の検証 ---
     if not jump:
+        print("jump（開始URL）が未設定です。終了します。")
         logger.error("jump（開始URL）が未設定です。終了します。")
         return
     if not columns:
+        print("抽出セレクター（su*）が1つもありません。終了します。")
         logger.error("抽出セレクター（su*）が1つもありません。終了します。")
         return
+
 
     user_agent = get_user_agent()
 
     # --- robots.txt チェック（Disallow なら即終了） ---
     base_for_robots = hp or jump
+    print("fーーー[DEBUG]　4. robots.txt チェック実行中...(Target: {base_for_robots}) ---")
     if not check_robots(base_for_robots, jump, user_agent):
-        logger.error("robots.txt により Disallow のため終了します。")
+        logger.error("robots.txt により  Disallow のため終了します。")
         return
+    print("  [OK] robots.txt チェック通過しました。")
 
     all_rows: List[Dict[str, str]] = []
 
 # --- Playwright 起動 ---
+    print("\n--- [DEBUG] ５．Playweight ブラウザの起動 ---")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=HEADLESS)
         context = browser.new_context(
@@ -173,15 +206,19 @@ def run() -> None:
 
         try:
             # 開始ページへ遷移
+            print(f"  [DEBUG] 開始ページに移管します。")
             logger.info("開始ページへ遷移します: %s", jump)
-            page.goto(jump, wait_until="domcontentloaded", timeout=60000)
+            page.goto(jump, wait_until="domcontentloaded", timeout=150)
             wait_for_network_idle(page)
+            print(f"  [OK] 開始ページに移動しました。現在のURL: {page.url}")
+
 
             # 判定用にループ外で変数を初期化
             page_no = 0
 
             # --- 逆順ページングループ（MAX_PAGES 上限） ---
             for page_no in range(1, MAX_PAGES + 1):
+                print(f"\n--- [PAGE {page_no}/{MAX_PAGES}]")
                 logger.info("-" * 50)
                 logger.info(
                     "ページ %d / 最大 %d を処理中: %s",
@@ -190,13 +227,16 @@ def run() -> None:
 
                 # ブロック検知 → 安全停止
                 if detect_block(page):
+                    print("  [CRITICAL] **ブロックを検知しました ")
                     logger.error("ブロックを検知したため安全停止します。")
                     save_screenshot(page, f"blocked_page_{page_no}")
                     break
 
                 # 基準列の出現を待機
                 base_selector = next(iter(columns.values()))
+                print(f"  [DEBUG] 要素抽出中: {base_selector}")
                 if not wait_with_retry(page, base_selector):
+                    print("  [WARN] 基準要素がありません。")
                     logger.warning("基準要素が出現しませんでした。スキップします。")
                     save_screenshot(page, f"no_element_page_{page_no}")
 
@@ -220,16 +260,20 @@ def run() -> None:
                 # データ抽出
                 rows = extract_page_data(page, columns)
                 if rows:
+                    print(f" [OK] {len(rows)} 件のデータを抽出しました。")
                     all_rows.extend(rows)
                     logger.info("累計収集行数: %d 行", len(all_rows))
                 else:
+                    print(" [WARN] データの抽出に失敗しました。{len(rows)} 件目のデータ")
                     logger.warning("このページからデータを取得できませんでした。")
 
                 # 人間らしい待機
                 human_like_delay()
 
                 # 前ページへ戻る（戻れなければループ終了）
+                print("  [DEBUG] ページ戻り。")
                 if not navigate_back(page, back_selector):
+                    print("  [INFO] 戻るボタンが押せなくなりました終了します。")
                     logger.info("これ以上戻れないため走査を終了します。")
                     break
 
@@ -243,14 +287,29 @@ def run() -> None:
                 )
 
         except Exception as exc:
+            print(f"  [FATAL ERROR]メインループで予期せぬ例外:\n(exc)")
             logger.error("メインループで予期せぬ例外: %s", exc)
             save_screenshot(page, "fatal_error")
         finally:
             # --- 後始末と保存 ---
+            print("\n--- [DEBUG] ６． 最終処理 ---")
+            print(f"  [INFO] 総収集 件数: {len(all_rows)}")
             logger.info("=" * 60)
             logger.info("走査終了。総収集行数: %d 行", len(all_rows))
             save_data(all_rows)
+            # --- プレビュー ---
+            if all_rows:
+                print(" [PREVIEW] 取得データの戦闘5件:")
+                for r in all_rows[:5]:
+                    print(f"    {r}")
 
             context.close()
             browser.close()
             logger.info("ブラウザを閉じました。処理完了。")
+
+            # main.py の末尾にこれが必要です
+if __name__ == "__main__":
+    print("=== デバッグモード開始 ===")
+    if check_dependencies():
+        run()
+    print("=== デバッグモード終了 ===")
